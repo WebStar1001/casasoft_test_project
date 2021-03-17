@@ -25,6 +25,13 @@ const routes: Routes = [
           ),
       },
       {
+        path: 'nutritional',
+        loadChildren: () =>
+            import('../modules/nutritional/nutritional.module').then(
+                (m) => m.NutritionalModule
+            ),
+      },
+      {
         path: 'user-management',
         loadChildren: () =>
           import('../modules/user-management/user-management.module').then(

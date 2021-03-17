@@ -1,137 +1,82 @@
-import { Injectable, OnDestroy } from '@angular/core';
-import { Observable, BehaviorSubject, of, Subscription } from 'rxjs';
-import { map, catchError, switchMap, finalize } from 'rxjs/operators';
-import { UserModel } from '../_models/user.model';
-import { AuthModel } from '../_models/auth.model';
-import { AuthHTTPService } from './auth-http';
-import { environment } from 'src/environments/environment';
-import { Router } from '@angular/router';
+import {Injectable} from '@angular/core';
+import Auth, {CognitoHostedUIIdentityProvider} from '@aws-amplify/auth';
+import {Hub, ICredentials} from '@aws-amplify/core';
+import {Subject, Observable, BehaviorSubject} from 'rxjs';
+import {CognitoUser} from 'amazon-cognito-identity-js';
+
+export interface NewUser {
+    email: string,
+    password: string,
+    firstName: string,
+};
 
 @Injectable({
-  providedIn: 'root',
+    providedIn: 'root'
 })
-export class AuthService implements OnDestroy {
-  // private fields
-  private unsubscribe: Subscription[] = []; // Read more: => https://brianflove.com/2016/12/11/anguar-2-unsubscribe-observables/
-  private authLocalStorageToken = `${environment.appVersion}-${environment.USERDATA_KEY}`;
+export class AuthService {
 
-  // public fields
-  currentUser$: Observable<UserModel>;
-  isLoading$: Observable<boolean>;
-  currentUserSubject: BehaviorSubject<UserModel>;
-  isLoadingSubject: BehaviorSubject<boolean>;
+    public loggedIn: boolean;
+    private _authState: Subject<CognitoUser | any> = new Subject<CognitoUser | any>();
 
+    authState: Observable<CognitoUser | any> = this._authState.asObservable();
 
-  get currentUserValue(): UserModel {
-    return this.currentUserSubject.value;
-  }
+    isLoading$: Observable<boolean>;
 
-  set currentUserValue(user: UserModel) {
-    this.currentUserSubject.next(user);
-  }
+    isLoadingSubject: BehaviorSubject<boolean>;
 
-  constructor(
-    private authHttpService: AuthHTTPService,
-    private router: Router
-  ) {
-    this.isLoadingSubject = new BehaviorSubject<boolean>(false);
-    this.currentUserSubject = new BehaviorSubject<UserModel>(undefined);
-    this.currentUser$ = this.currentUserSubject.asObservable();
-    this.isLoading$ = this.isLoadingSubject.asObservable();
-    const subscr = this.getUserByToken().subscribe();
-    this.unsubscribe.push(subscr);
-  }
+    public static SIGN_IN = 'signIn';
+    public static SIGN_OUT = 'signOut';
+    public static FACEBOOK = CognitoHostedUIIdentityProvider.Facebook;
+    public static GOOGLE = CognitoHostedUIIdentityProvider.Google;
 
-  // public methods
-  login(email: string, password: string): Observable<UserModel> {
-    this.isLoadingSubject.next(true);
-    return this.authHttpService.login(email, password).pipe(
-      map((auth: AuthModel) => {
-        const result = this.setAuthFromLocalStorage(auth);
-        return result;
-      }),
-      switchMap(() => this.getUserByToken()),
-      catchError((err) => {
-        console.error('err', err);
-        return of(undefined);
-      }),
-      finalize(() => this.isLoadingSubject.next(false))
-    );
-  }
-
-  logout() {
-    localStorage.removeItem(this.authLocalStorageToken);
-    this.router.navigate(['/auth/login'], {
-      queryParams: {},
-    });
-  }
-
-  getUserByToken(): Observable<UserModel> {
-    const auth = this.getAuthFromLocalStorage();
-    if (!auth || !auth.accessToken) {
-      return of(undefined);
+    constructor() {
+        Hub.listen('auth', (data) => {
+            const {channel, payload} = data;
+            if (channel === 'auth') {
+                this._authState.next(payload.event);
+            }
+        });
+        this.isLoadingSubject = new BehaviorSubject<boolean>(false);
+        this.isLoading$ = this.isLoadingSubject.asObservable();
     }
 
-    this.isLoadingSubject.next(true);
-    return this.authHttpService.getUserByToken(auth.accessToken).pipe(
-      map((user: UserModel) => {
-        if (user) {
-          this.currentUserSubject = new BehaviorSubject<UserModel>(user);
-        } else {
-          this.logout();
-        }
-        return user;
-      }),
-      finalize(() => this.isLoadingSubject.next(false))
-    );
-  }
-
-  // need create new user then login
-  registration(user: UserModel): Observable<any> {
-    this.isLoadingSubject.next(true);
-    return this.authHttpService.createUser(user).pipe(
-      map(() => {
-        this.isLoadingSubject.next(false);
-      }),
-      switchMap(() => this.login(user.email, user.password)),
-      catchError((err) => {
-        console.error('err', err);
-        return of(undefined);
-      }),
-      finalize(() => this.isLoadingSubject.next(false))
-    );
-  }
-
-  forgotPassword(email: string): Observable<boolean> {
-    this.isLoadingSubject.next(true);
-    return this.authHttpService
-      .forgotPassword(email)
-      .pipe(finalize(() => this.isLoadingSubject.next(false)));
-  }
-
-  // private methods
-  private setAuthFromLocalStorage(auth: AuthModel): boolean {
-    // store auth accessToken/refreshToken/epiresIn in local storage to keep user logged in between page refreshes
-    if (auth && auth.accessToken) {
-      localStorage.setItem(this.authLocalStorageToken, JSON.stringify(auth));
-      return true;
+    signUp(user: NewUser): Promise<CognitoUser | any> {
+        return Auth.signUp({
+            "username": user.email,
+            "password": user.password,
+            "attributes": {
+                "email": user.email,
+                "given_name": user.firstName,
+            }
+        });
     }
-    return false;
-  }
 
-  private getAuthFromLocalStorage(): AuthModel {
-    try {
-      const authData = JSON.parse(
-        localStorage.getItem(this.authLocalStorageToken)
-      );
-      return authData;
-    } catch (error) {
-      console.error(error);
-      return undefined;
+    signIn(username: string, password: string): Promise<CognitoUser | any> {
+        this.isLoadingSubject.next(true);
+        return new Promise((resolve, reject) => {
+            Auth.signIn(username, password)
+                .then((user: CognitoUser | any) => {
+                    this.loggedIn = true;
+                    console.log(user);
+                    this.isLoadingSubject.next(false);
+                    resolve(user);
+                }).catch((error: any) => {
+                    console.log(error);
+                    reject(error);
+                    this.isLoadingSubject.next(false);
+                });
+        });
     }
-  }
 
-  ngOnDestroy() {
-    this.unsubscribe.forEach((sb) => sb.unsubscribe());
-  }
+    signOut(): Promise<any> {
+        return Auth.signOut()
+            .then(() => this.loggedIn = false)
+    }
+
+    socialSignIn(provider: CognitoHostedUIIdentityProvider): Promise<ICredentials> {
+        return Auth.federatedSignIn({
+            'provider': provider
+        });
+    }
+
 }

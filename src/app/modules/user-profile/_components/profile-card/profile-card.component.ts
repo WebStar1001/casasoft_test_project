@@ -10,6 +10,6 @@ import { AuthService, UserModel } from '../../../auth';
 export class ProfileCardComponent {
   user$: Observable<UserModel>;
   constructor(public userService: AuthService) {
-    this.user$ = this.userService.currentUserSubject.asObservable();
+    // this.user$ = this.userService.currentUserSubject.asObservable();
   }
 }

@@ -22,14 +22,14 @@ export class PersonalInformationComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const sb = this.userService.currentUserSubject.asObservable().pipe(
-      first(user => !!user)
-    ).subscribe(user => {
-      this.user = Object.assign({}, user);
-      this.firstUserState = Object.assign({}, user);
-      this.loadForm();
-    });
-    this.subscriptions.push(sb);
+    // const sb = this.userService.currentUserSubject.asObservable().pipe(
+    //   first(user => !!user)
+    // ).subscribe(user => {
+    //   this.user = Object.assign({}, user);
+    //   this.firstUserState = Object.assign({}, user);
+    //   this.loadForm();
+    // });
+    // this.subscriptions.push(sb);
   }
 
   ngOnDestroy() {
@@ -60,7 +60,7 @@ export class PersonalInformationComponent implements OnInit, OnDestroy {
     // Do request to your server for user update, we just imitate user update there
     this.userService.isLoadingSubject.next(true);
     setTimeout(() => {
-      this.userService.currentUserSubject.next(Object.assign({}, this.user));
+      // this.userService.currentUserSubject.next(Object.assign({}, this.user));
       this.userService.isLoadingSubject.next(false);
     }, 2000);
   }

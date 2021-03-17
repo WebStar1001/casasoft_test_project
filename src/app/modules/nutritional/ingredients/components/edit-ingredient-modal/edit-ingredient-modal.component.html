@@ -1,0 +1,84 @@
+<div class="modal-content">
+    <div class="modal-header">
+        <div class="modal-title h4" id="example-modal-sizes-title-lg">
+            <ng-container *ngIf="ingredient">
+                <ng-container *ngIf="ingredient.id">Edit</ng-container>
+                <ng-container *ngIf="!ingredient.id">Create</ng-container>
+                ingredient
+                <ng-container *ngIf="ingredient.id">'{{ingredient.title}}'</ng-container>
+            </ng-container>
+        </div>
+    </div>
+    <div class="overlay overlay-block cursor-default modal-body" style="min-height: 404px;">
+        <ng-container *ngIf="isLoading$ | async">
+            <div class="overlay-layer bg-transparent">
+                <div class="spinner spinner-lg spinner-success"></div>
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="ingredient">
+            <form action="#" class="form form-label-right" [formGroup]="formGroup">
+                <div class="form-group row">
+                    <div class="col-lg-12">
+                        <label class="form-label">Enter Title</label>
+                        <input type="text" class="form-control form-control-lg form-control-solid" name="title"
+                               placeholder="Title" autocomplete="off" [class.is-invalid]="isControlInvalid('title')"
+                               [class.is-valid]="isControlValid('title')" formControlName="title"/>
+                        <div class="valid-feedback" *ngIf="isControlValid('title')">Title was entered correct</div>
+                        <div class="invalid-feedback" *ngIf="controlHasError('required', 'title')">Title is
+                            required
+                        </div>
+                        <div class="invalid-feedback" *ngIf="controlHasError('minlength', 'title')">Title should
+                            have at
+                            least 3 symbols
+                        </div>
+                        <div class="invalid-feedback" *ngIf="controlHasError('maxLength', 'title')">Title should
+                            have
+                            maximum 100 symbols
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group-row">
+                    <div class="col-lg-9 col-xl-6">
+                        <div class="image-input image-input-outline"
+                             id="kt_profile_avatar"
+                             [class.image-input-empty]="!ingredient.image"
+                             [style.backgroundImage]="'url(./assets/media/users/blank.png)'">
+                            <div class="image-input-wrapper" [style.backgroundImage]="getPic()"></div>
+                            <label class="btn btn-xs btn-icon btn-circle btn-white btn-hover-text-primary btn-shadow"
+                                   data-action="change"
+                                   data-toggle="tooltip"
+                                   title=""
+                                   data-original-title="Change avatar">
+                                <i class="fa fa-pen icon-sm text-muted"></i>
+                                <input type="file" name="profile_avatar" accept=".png, .jpg, .jpeg"  (change)="changePic($event)"  formControlName="image" />
+                                <input type="hidden" name="profile_avatar_remove" />
+                            </label>
+                            <span class="btn btn-xs btn-icon btn-circle btn-white btn-hover-text-primary btn-shadow"
+                                  data-action="cancel" data-toggle="tooltip" title="" data-original-title="Cancel avatar">
+                                <i class="ki ki-bold-close icon-xs text-muted"></i>
+                            </span>
+                            <span *ngIf="!ingredient.image"
+                                  class="btn btn-xs btn-icon btn-circle btn-white btn-hover-text-primary btn-shadow"
+                                  (click)="deletePic()"
+                                  data-action="remove" data-toggle="tooltip" title="" data-original-title="Remove avatar">
+                                <i class="ki ki-bold-close icon-xs text-muted"></i>
+                            </span>
+                        </div>
+                        <span class="form-text text-muted">Allowed file types: png, jpg, jpeg.</span>
+                    </div>
+                </div>
+
+            </form>
+        </ng-container>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-light btn-elevate mr-2" (click)="modal.dismiss()">Cancel</button>
+        <ng-container *ngIf="ingredient">
+
+            <button type="submit" class="btn btn-primary btn-elevate" (click)="save()"
+                    [disabled]="formGroup.invalid">Save
+            </button>
+        </ng-container>
+    </div>
+</div>
