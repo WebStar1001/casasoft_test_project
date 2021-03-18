@@ -73,7 +73,7 @@ export class LoginComponent implements OnInit, OnDestroy {
         this.hasError = false;
         this.authService.signIn(this.f.email.value.toString(), this.f.password.value.toString())
             .then((user: CognitoUser|any) => {
-                // console.log(user);return;
+                localStorage.setItem('access_token', user.signInUserSession);
                 this.router.navigate(['nutritional/ingredients']);
             })
             .catch((error: any) => {
