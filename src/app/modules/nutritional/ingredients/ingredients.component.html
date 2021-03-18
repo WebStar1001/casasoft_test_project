@@ -8,36 +8,6 @@
     </div>
   </div>
   <div class="card-body">
-    <!-- begin: Filtration form -->
-    <div class="form form-label-right">
-      <div class="form-group row">
-        <div class="col-lg-4">
-          <div class="row" [formGroup]="filterGroup">
-            <div class="col-lg-6">
-              <select class="form-control" name="status" placeholder="Filter by Status" formControlName="status">
-                <option value="">All</option>
-                <option value="1">Susspended</option>
-                <option value="2">Active</option>
-                <option value="3">Pending</option>
-              </select><small class="form-text text-muted"><b>Filter</b> by Status</small>
-            </div>
-            <div class="col-lg-6">
-              <select class="form-control" placeholder="Filter by Type" name="type" formControlName="type">
-                <option value="">All</option>
-                <option value="1">Business</option>
-                <option value="2">Individual</option>
-              </select><small class="form-text text-muted"><b>Filter</b> by Type</small>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-2" [formGroup]="searchGroup">
-          <input type="text" class="form-control" name="searchText" placeholder="Search" value=""
-            formControlName="searchTerm" /><small class="form-text text-muted"><b>Search</b> in all fields</small>
-        </div>
-      </div>
-    </div>
-    <!-- end: Filtration form -->
-
     <!-- begin: Grouping -->
     <ng-container *ngIf="grouping.getSelectedRowsCount()">
       <div class="form">
@@ -107,9 +77,9 @@
             <td><img src="{{ ingredient.image }}" width="100px" height="100px;"/></td>
             <td>
               <a title="Edit ingredient" class="btn btn-icon btn-light btn-hover-primary btn-sm mx-3"
-                (click)="edit(ingredient.id)">
-                <span [inlineSVG]="'./assets/media/svg/icons/Communication/Write.svg'" cacheSVG="true"
-                  class="svg-icon svg-icon-md svg-icon-primary">
+                 (click)="edit(ingredient.id)">
+                <span [inlineSVG]="'./assets/media/svg/icons/Food/Carrot.svg'" cacheSVG="true"
+                      class="svg-icon svg-icon-md svg-icon-primary">
                 </span>
               </a>
               <a title="Delete ingredient" class="btn btn-icon btn-light btn-hover-danger btn-sm"

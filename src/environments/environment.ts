@@ -7,7 +7,9 @@ export const environment = {
   appVersion: 'v717demo1',
   USERDATA_KEY: 'authf649fc9a5f55',
   isMockEnabled: true,
-  apiUrl: 'https://3guix7arqi.execute-api.us-east-1.amazonaws.com/dev'
+  apiUrl: 'https://4h9hbli5nh.execute-api.us-east-1.amazonaws.com/dev',
+  spoonacular_api : 'https://api.spoonacular.com/food/ingredients',
+  spoonacular_api_key : '3d01ebdfea1b4a4ca4dbf3aed3152c6c'
 };
 
 /*

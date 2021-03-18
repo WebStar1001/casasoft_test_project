@@ -15,8 +15,8 @@ import {TranslationModule} from '../i18n/translation.module';
 Amplify.configure({
   Auth:{
     region: 'us-east-1',
-    userPoolId: 'us-east-1_BQxNeElCu',
-    userPoolWebClientId: '65m52dv5hv1nahismc6h7l030r',
+    userPoolId: 'us-east-1_rpFcfsc1T',
+    userPoolWebClientId: '4808jp4n2a5p86gd556071gh66',
   }
 });
 @NgModule({

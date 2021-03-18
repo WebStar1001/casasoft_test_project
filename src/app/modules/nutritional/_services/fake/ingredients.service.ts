@@ -1,7 +1,7 @@
 import {Injectable, OnDestroy, Inject} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {BehaviorSubject, forkJoin, Observable} from 'rxjs';
-import {catchError, exhaustMap, map} from 'rxjs/operators';
+import {BehaviorSubject, forkJoin, Observable, of} from 'rxjs';
+import {catchError, exhaustMap, finalize, map} from 'rxjs/operators';
 import {
     TableService,
     TableResponseModel,
@@ -28,8 +28,8 @@ const DEFAULT_STATE: ITableState = {
 };
 const bucket = new S3(
     {
-        accessKeyId: 'AKIAZ3GF5ZKQBLUPTH22',
-        secretAccessKey: '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',
+        accessKeyId: 'AKIAZ3GF5ZKQFNNTE4TT',
+        secretAccessKey: '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',
         region: 'us-east-1'
     }
 );
@@ -39,6 +39,8 @@ const bucket = new S3(
 })
 export class IngredientsService extends TableService<Ingredient> implements OnDestroy {
     API_URL = `${environment.apiUrl}/ingredients`;
+    SPOON_API = `${environment.spoonacular_api}`;
+    SPOON_API_KEY = `${environment.spoonacular_api_key}`;
 
     constructor(@Inject(HttpClient) http) {
         super(http);
@@ -58,7 +60,26 @@ export class IngredientsService extends TableService<Ingredient> implements OnDe
         );
     }
 
-    async uploadFile(file) {
+    getNutritionalId(query){
+        const url = `${this.SPOON_API}/search?apiKey=${this.SPOON_API_KEY}&query=${query}`;
+        return this.http.get<BaseModel>(url).pipe(
+            catchError(err => {
+                return of({ query: undefined });
+            }),
+            map((res) => {return res})
+        )
+    }
+    getNutritionalInfo(ingredient_id){
+        const url = `${this.SPOON_API}/${ingredient_id}/information?apiKey=${this.SPOON_API_KEY}&amount=100&unit=g`;
+        return this.http.get<BaseModel>(url).pipe(
+            catchError(err => {
+                return of({ query: undefined });
+            }),
+            finalize(() => {})
+        );
+    }
+
+    uploadFile(file) {
         const contentType = file.type;
         const params = {
             Bucket: 'casasoftbucket',

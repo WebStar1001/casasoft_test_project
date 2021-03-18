@@ -7,12 +7,13 @@ import {Ingredient} from '../../../_models/ingredient.model';
 import {IngredientsService} from '../../../_services';
 import {CustomAdapter, CustomDateParserFormatter, getDateFromString} from '../../../../../_metronic/core';
 
-const EMPTY_CUSTOMER: Ingredient = {
+const EMPTY_INGREDIENT: Ingredient = {
     id: undefined,
     title: '',
     image: '',
-    image_file: undefined,
-    aws_path: ''
+    fat: 0,
+    calories: 0,
+    carbohydrates: 0,
 };
 
 @Component({
@@ -31,6 +32,8 @@ export class EditIngredientModalComponent implements OnInit, OnDestroy {
     isLoading$;
     ingredient: Ingredient;
     formGroup: FormGroup;
+    ImageInput: FileList;
+
     private subscriptions: Subscription[] = [];
 
     constructor(
@@ -46,18 +49,17 @@ export class EditIngredientModalComponent implements OnInit, OnDestroy {
 
     loadIngredient() {
         if (!this.id) {
-            this.ingredient = EMPTY_CUSTOMER;
+            this.ingredient = EMPTY_INGREDIENT;
             this.loadForm();
         } else {
             const sb = this.ingredientsService.getItemById(this.id).pipe(
                 first(),
                 catchError((errorMessage) => {
                     this.modal.dismiss(errorMessage);
-                    return of(EMPTY_CUSTOMER);
+                    return of(EMPTY_INGREDIENT);
                 })
             ).subscribe((ingredient: Ingredient) => {
                 this.ingredient = ingredient;
-                this.ingredient.aws_path = ingredient.image;
                 this.loadForm();
             });
             this.subscriptions.push(sb);
@@ -67,8 +69,37 @@ export class EditIngredientModalComponent implements OnInit, OnDestroy {
     loadForm() {
         this.formGroup = this.fb.group({
             title: [this.ingredient.title, Validators.compose([Validators.required, Validators.minLength(3), Validators.maxLength(100)])],
-            image: [this.ingredient.image, Validators.compose([Validators.required])],
+            image: this.ingredient.image,
+            fat: this.ingredient.fat,
+            calories: this.ingredient.calories,
+            carbohydrates: this.ingredient.carbohydrates,
         });
+    }
+
+    async loadDataFromAPI() {
+        try {
+            const query = this.formGroup.controls.title.value;
+            this.ingredientsService.getNutritionalId(query)
+                .subscribe((res) => {
+                    if (res['totalResults'] > 0) {
+                        this.ingredientsService.getNutritionalInfo(res['results'][0]['id']).subscribe(res => {
+                            for (let i in res['nutrition']['nutrients']) {
+                                if (res['nutrition']['nutrients'][i]['name'] == 'Fat') {
+                                    this.ingredient.fat = res['nutrition']['nutrients'][i]['amount'];
+                                } else if (res['nutrition']['nutrients'][i]['name'] == 'Calories') {
+                                    this.ingredient.calories = res['nutrition']['nutrients'][i]['amount'];
+                                } else if (res['nutrition']['nutrients'][i]['name'] == 'Carbohydrates') {
+                                    this.ingredient.carbohydrates = res['nutrition']['nutrients'][i]['amount'];
+                                }
+                            }
+                            this.loadForm();
+                        })
+                    }
+                });
+        } catch (error) {
+            console.log(error);
+        }
+
     }
 
     save() {
@@ -98,9 +129,8 @@ export class EditIngredientModalComponent implements OnInit, OnDestroy {
             reader.onload = () => {
 
                 this.ingredient.image = reader.result as string;
-                this.ingredient.image_file = event.target.files;
+                this.ImageInput = event.target.files;
             };
-
         }
 
     }
@@ -111,8 +141,10 @@ export class EditIngredientModalComponent implements OnInit, OnDestroy {
 
     async edit() {
         try {
-            const Uploaded = await this.ingredientsService.uploadFile(this.ingredient.image_file.item(0));
-            this.ingredient.aws_path = Uploaded.Location;
+            if (typeof this.ImageInput != 'undefined') {
+                const Uploaded = await this.ingredientsService.uploadFile(this.ImageInput.item(0));
+                this.ingredient.image = Uploaded.Location;
+            }
             const sbUpdate = this.ingredientsService.update(this.ingredient).pipe(
                 tap(() => {
                     this.modal.close();
@@ -123,20 +155,18 @@ export class EditIngredientModalComponent implements OnInit, OnDestroy {
                 }),
             ).subscribe(res => this.ingredient = res);
             this.subscriptions.push(sbUpdate);
-        }catch (error) {
+        } catch (error) {
             console.log(error);
         }
     }
 
     async create() {
         try {
-            const Uploaded = await this.ingredientsService.uploadFile(this.ingredient.image_file.item(0));
-            this.ingredient.aws_path = Uploaded.Location;
+            const Uploaded = await this.ingredientsService.uploadFile(this.ImageInput.item(0));
+            this.ingredient.image = Uploaded.Location;
             const sbCreate = this.ingredientsService.create(this.ingredient).pipe(
                 tap(() => {
                     this.modal.close();
-                    this.ingredient.image = '';
-                    this.ingredient.title = '';
                 }),
                 catchError((errorMessage) => {
                     this.modal.dismiss(errorMessage);
@@ -147,10 +177,6 @@ export class EditIngredientModalComponent implements OnInit, OnDestroy {
         } catch (error) {
             console.log(error);
         }
-    }
-
-    upload() {
-        alert('sdfsfd')
     }
 
     private prepareIngredient() {

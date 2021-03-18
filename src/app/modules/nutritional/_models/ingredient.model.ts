@@ -4,6 +4,7 @@ export interface Ingredient extends BaseModel {
     id: number;
     title: string;
     image: string;
-    image_file: FileList
-    aws_path: String
+    fat:number;
+    calories : number;
+    carbohydrates : number
 }
