@@ -79,6 +79,7 @@ export class EditIngredientModalComponent implements OnInit, OnDestroy {
     async loadDataFromAPI() {
         try {
             const query = this.formGroup.controls.title.value;
+            this.ingredient.title = query;
             this.ingredientsService.getNutritionalId(query)
                 .subscribe((res) => {
                     if (res['totalResults'] > 0) {
