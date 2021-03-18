@@ -50,7 +50,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
                     ]),
                 ],
                 email: [
-                    'qwe@qwe.qwe',
+                    '',
                     Validators.compose([
                         Validators.required,
                         Validators.email,
